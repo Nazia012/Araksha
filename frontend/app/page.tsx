@@ -103,18 +103,12 @@ const HANDWRITING_SAMPLES = [
 ];
 
 export default function HomePage() {
-  // Unified single-tab tokens: default to Dr. Sanjay's prescription
-  const [tokens, setTokens] = useState<TokenItem[]>([
-    { text: 'Tab Aripax 10mg', confidence: 0.92, imageSrc: '/prescriptions/crops/line1_aripax.jpg', plainEnglishUsage: 'Aripiprazole • Mood & Psychosis (1-0-0 Morning)' },
-    { text: 'Tab Lupizep 25mg', confidence: 0.88, imageSrc: '/prescriptions/crops/line2_lupizep.jpg', plainEnglishUsage: 'Paroxetine + Clonazepam • Depression & Panic (0-0-1 Night)' },
-    { text: 'Tab Toficalm 50mg', confidence: 0.90, imageSrc: '/prescriptions/crops/line3_toficalm.jpg', plainEnglishUsage: 'Tofisopam • Daytime Anxiety (1/2-0-1/2)' },
-    { text: 'Tab Lonazep MD', confidence: 0.86, imageSrc: '/prescriptions/crops/line4_lonazep.jpg', plainEnglishUsage: 'Clonazepam Mouth Dissolving • Sleep & Panic (0-0-1 at 8PM)' },
-    { text: 'Syr Carnisure 10ml', confidence: 0.91, imageSrc: '/prescriptions/crops/line5_carnisure.jpg', plainEnglishUsage: 'Levocarnitine • Cellular Energy Syrup (1.5 Months)' },
-  ]);
+  // Unified single-tab tokens: start blank by default
+  const [tokens, setTokens] = useState<TokenItem[]>([]);
 
-  // Selected handwriting sample or uploaded preview
-  const [previewUrl, setPreviewUrl] = useState<string | null>('/prescriptions/dr_sanjay_prescription.jpg');
-  const [activeSampleId, setActiveSampleId] = useState<string>('dr_sanjay');
+  // Selected handwriting sample or uploaded preview: blank by default
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [activeSampleId, setActiveSampleId] = useState<string>('');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   // Text paste & search
@@ -130,9 +124,24 @@ export default function HomePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Run initial analysis
+  // Clear all loaded medicines and previews
+  const handleClearAll = () => {
+    setTokens([]);
+    setPreviewUrl(null);
+    setActiveSampleId('');
+    setUploadedFileName(null);
+    setReport(null);
+    setCheckedItems({});
+    setSearchQuery('');
+    setSearchResults([]);
+    setPastedText('');
+  };
+
+  // Run analysis only if medicines are present
   useEffect(() => {
-    runSafetyCheck(tokens);
+    if (tokens.length > 0) {
+      runSafetyCheck(tokens);
+    }
   }, []);
 
   const handleSelectSample = (sample: typeof HANDWRITING_SAMPLES[0]) => {
@@ -338,20 +347,39 @@ export default function HomePage() {
               <h2>📸 Your Prescription</h2>
               <span className="panel-subtext">Add pills, upload a photo, or test doctor handwriting</span>
             </div>
-            <button
-              onClick={() => setShowPasteBox(!showPasteBox)}
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--border-medium)',
-                color: 'var(--text-muted)',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-              }}
-            >
-              {showPasteBox ? 'Hide Paste' : '📝 Paste Notes'}
-            </button>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {(tokens.length > 0 || previewUrl || uploadedFileName) && (
+                <button
+                  onClick={handleClearAll}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--border-medium)',
+                    color: 'var(--text-muted)',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                  title="Reset to blank prescription"
+                >
+                  ✕ Clear
+                </button>
+              )}
+              <button
+                onClick={() => setShowPasteBox(!showPasteBox)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border-medium)',
+                  color: 'var(--text-muted)',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                }}
+              >
+                {showPasteBox ? 'Hide Paste' : '📝 Paste Notes'}
+              </button>
+            </div>
           </div>
 
           {/* Quick Doctor Handwriting OCR Test Chips */}
@@ -406,11 +434,11 @@ export default function HomePage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={previewUrl} alt="Prescription Document / Handwriting" className="uploaded-preview-img" />
                 </div>
-              ) : (
+              ) : tokens.length > 0 ? (
                 <div className="prescription-doc-mock">
                   <div className="doc-top-bar">
                     <span>℞ DOCTOR PRESCRIPTION</span>
-                    <span style={{ color: '#0284C7' }}>VERIFIED</span>
+                    <span style={{ color: '#0284C7' }}>ACTIVE</span>
                   </div>
                   <div className="ocr-bbox-list">
                     {tokens.map((t, idx) => (
@@ -422,6 +450,14 @@ export default function HomePage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              ) : (
+                <div className="prescription-doc-mock" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '190px', textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>
+                  <span style={{ fontSize: '2.5rem', marginBottom: '8px', opacity: 0.7 }}>📄</span>
+                  <strong style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}>No Prescription Loaded</strong>
+                  <p style={{ fontSize: '0.8rem', marginTop: '4px', maxWidth: '320px', lineHeight: 1.4 }}>
+                    Upload a prescription photo below, or tap a sample above to test doctor handwriting.
+                  </p>
                 </div>
               )}
 
@@ -456,46 +492,52 @@ export default function HomePage() {
               Medicines on this Prescription:
             </span>
 
-            <div className="chips-tray">
-              {tokens.map((t, idx) => {
-                const isUnclear = t.confidence < 0.8;
-                return (
-                  <div key={idx} className={`medicine-item-card ${isUnclear ? 'low-clarity' : ''}`}>
-                    <div>
-                      <span className="medicine-name">💊 {t.text}</span>
-                      <span className="medicine-status-text">
-                        {isUnclear ? (
-                          <span style={{ color: '#D97706', fontWeight: 600 }}>
-                            ⚠️ Handwriting hard to read (needs double-checking)
-                          </span>
-                        ) : (
-                          <span style={{ color: '#059669', fontWeight: 600 }}>
-                            ✓ Handwriting clearly recognized
-                          </span>
-                        )}
-                        {t.plainEnglishUsage && ` • ${t.plainEnglishUsage}`}
-                      </span>
+            {tokens.length > 0 ? (
+              <div className="chips-tray">
+                {tokens.map((t, idx) => {
+                  const isUnclear = t.confidence < 0.8;
+                  return (
+                    <div key={idx} className={`medicine-item-card ${isUnclear ? 'low-clarity' : ''}`}>
+                      <div>
+                        <span className="medicine-name">💊 {t.text}</span>
+                        <span className="medicine-status-text">
+                          {isUnclear ? (
+                            <span style={{ color: '#D97706', fontWeight: 600 }}>
+                              ⚠️ Handwriting hard to read (needs double-checking)
+                            </span>
+                          ) : (
+                            <span style={{ color: '#059669', fontWeight: 600 }}>
+                              ✓ Handwriting clearly recognized
+                            </span>
+                          )}
+                          {t.plainEnglishUsage && ` • ${t.plainEnglishUsage}`}
+                        </span>
+                      </div>
+                      <div className="medicine-actions">
+                        <button
+                          className="chip-btn-edit"
+                          onClick={() => handleEditToken(idx)}
+                          title="Edit medicine name"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="chip-btn-remove"
+                          onClick={() => handleRemoveToken(idx)}
+                          title="Remove medicine"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
-                    <div className="medicine-actions">
-                      <button
-                        className="chip-btn-edit"
-                        onClick={() => handleEditToken(idx)}
-                        title="Edit medicine name"
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className="chip-btn-remove"
-                        onClick={() => handleRemoveToken(idx)}
-                        title="Remove medicine"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ padding: '0.85rem', borderRadius: '8px', border: '1px dashed var(--border-medium)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '12px', background: 'rgba(255, 255, 255, 0.02)' }}>
+                No medicines added yet. Select a doctor sample above or search below.
+              </div>
+            )}
           </div>
 
           {/* Search to Add More Pills */}
@@ -534,6 +576,8 @@ export default function HomePage() {
           >
             {loading ? (
               <>⏳ Checking Verified Medical Database & Consulting Gemma 4...</>
+            ) : tokens.length === 0 ? (
+              <>➕ Add or Select Medicines to Check</>
             ) : (
               <>🛡️ Check Prescription Safety</>
             )}
@@ -666,8 +710,28 @@ export default function HomePage() {
               </div>
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
-              <p>Analyzing prescription safety...</p>
+            <div style={{ textAlign: 'center', padding: '4rem 1.5rem', color: 'var(--text-muted)' }}>
+              {loading ? (
+                <>
+                  <div style={{ fontSize: '2rem', marginBottom: '12px' }}>⏳</div>
+                  <strong style={{ color: 'var(--text-main)', fontSize: '1rem', display: 'block' }}>
+                    Analyzing Prescription Safety...
+                  </strong>
+                  <p style={{ fontSize: '0.85rem', marginTop: '6px' }}>
+                    Querying verified medical interaction database & consulting Google Gemma 4.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '12px', opacity: 0.7 }}>🛡️</div>
+                  <strong style={{ color: 'var(--text-main)', fontSize: '1.05rem', display: 'block' }}>
+                    Ready to Inspect
+                  </strong>
+                  <p style={{ fontSize: '0.85rem', marginTop: '6px', maxWidth: '340px', marginInline: 'auto', lineHeight: 1.4 }}>
+                    Upload a prescription photo or choose a handwriting test sample on the left to verify medication safety in plain English.
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>
