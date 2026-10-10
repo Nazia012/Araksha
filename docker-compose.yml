@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # 1. Backend Gateway (FastAPI)
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: prescription_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://ddi_user:ddi_password@db:5432/ddi_db
+      - GEMMA_API_URL=http://ai_service:11434
+      - GEMMA_MODEL=gemma4:4b
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+      ai_service:
+        condition: service_started
+    networks:
+      - prescription_network
+
+  # 2. AI Inference Service (Google Gemma 4 via Ollama / vLLM)
+  ai_service:
+    image: ollama/ollama:latest
+    container_name: prescription_gemma_ai
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    networks:
+      - prescription_network
+
+  # 3. Deterministic Clinical Database (PostgreSQL)
+  db:
+    image: postgres:16-alpine
+    container_name: prescription_db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=ddi_user
+      - POSTGRES_PASSWORD=ddi_password
+      - POSTGRES_DB=ddi_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ddi_user -d ddi_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - prescription_network
+
+volumes:
+  pg_data:
+    driver: local
+  ollama_models:
+    driver: local
+
+networks:
+  prescription_network:
+    driver: bridge

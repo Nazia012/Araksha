@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prescription & Drug Interaction Inspector (Gemma 4)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Header Navigation -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Prescription Inspector</h1>
+          <span class="badge-gemma">Powered by Google Gemma 4</span>
+        </div>
+      </div>
+      <div class="header-status">
+        <div class="status-indicator live">
+          <span class="dot"></span>
+          <span>DDI Engine: Active (RxNorm 100+ Seed)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Mobile Device Simulator Container -->
+    <main class="device-viewport-wrapper">
+      <div class="mobile-phone-frame">
+        <div class="phone-notch">
+          <div class="camera-lens"></div>
+          <div class="speaker-grill"></div>
+        </div>
+
+        <!-- Phone Screen Content -->
+        <div class="phone-screen" id="phoneScreen">
+          
+          <!-- STEP 1: Camera View & Document Crop Guides -->
+          <section id="stepCamera" class="flow-step active">
+            <div class="step-header">
+              <h2>Prescription Scan</h2>
+              <p>Position medical document within the bounding box guide</p>
+            </div>
+
+            <div class="camera-viewfinder">
+              <div class="crop-guide-box">
+                <div class="corner-guide top-left"></div>
+                <div class="corner-guide top-right"></div>
+                <div class="corner-guide bottom-left"></div>
+                <div class="corner-guide bottom-right"></div>
+                
+                <!-- Bounding Box OCR Simulation Overlay -->
+                <div class="simulated-prescription-paper">
+                  <div class="clinic-header">
+                    <span class="clinic-name">METROPOLITAN HEALTH CLINIC</span>
+                    <span class="rx-symbol">℞</span>
+                  </div>
+                  <div class="patient-line">
+                    <span>Patient: John Miller</span>
+                    <span>Date: Today</span>
+                  </div>
+                  <div class="ocr-bounding-boxes">
+                    <div class="bbox bbox-low-conf" title="OCR Confidence 72% (<80% Flagged)">
+                      <span class="bbox-text">Warfrin 5mg tab</span>
+                      <span class="conf-badge">72% OCR</span>
+                    </div>
+                    <div class="bbox bbox-high-conf" title="OCR Confidence 95%">
+                      <span class="bbox-text">Aspirin 81mg tab</span>
+                      <span class="conf-badge">95% OCR</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="scanner-laser"></div>
+              </div>
+            </div>
+
+            <div class="preset-section">
+              <span class="section-label">⚡ Instant Clinical Presets (One-Click Test):</span>
+              <div class="preset-chips">
+                <button class="preset-btn" onclick="selectPreset('bleeding')">
+                  <strong>Warfarin + Aspirin</strong>
+                  <span>Severe Bleed Risk</span>
+                </button>
+                <button class="preset-btn" onclick="selectPreset('hypotension')">
+                  <strong>Sildenafil + Nitroglycerin</strong>
+                  <span>Fatal Blood Pressure Drop</span>
+                </button>
+                <button class="preset-btn" onclick="selectPreset('hyperkalemia')">
+                  <strong>Lisinopril + Spironolactone</strong>
+                  <span>Arrhythmia / High Potassium</span>
+                </button>
+                <button class="preset-btn" onclick="selectPreset('safe')">
+                  <strong>Metformin + Acetaminophen</strong>
+                  <span>Clear / Safe</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="camera-actions">
+              <button class="btn-secondary" onclick="triggerPresetSim()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Upload Photo
+              </button>
+              <button class="btn-primary" onclick="proceedToReview()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                Capture Document
+              </button>
+            </div>
+          </section>
+
+
+          <!-- STEP 2: On-Device OCR Review & Confidence Chips -->
+          <section id="stepReview" class="flow-step">
+            <div class="step-header">
+              <button class="btn-back" onclick="goToStep('stepCamera')">← Back</button>
+              <h2>Review Detected Drugs</h2>
+              <p>Google ML Kit OCR preview. Low-confidence tokens (&lt;80%) flagged in amber.</p>
+            </div>
+
+            <!-- Warning Callout for Low Confidence -->
+            <div id="uncertaintyAlert" class="uncertainty-banner">
+              <div class="alert-icon">⚠️</div>
+              <div>
+                <strong>Low Confidence Token Detected</strong>
+                <p>One or more handwritten medicines scored &lt; 80%. Tap the chip to review or edit before verifying interactions.</p>
+              </div>
+            </div>
+
+            <!-- Interactive Token Chips -->
+            <div class="review-chips-area">
+              <span class="section-label">Prescription Medication Chips:</span>
+              <div id="chipsContainer" class="chips-container">
+                <!-- Dynamically populated chips -->
+              </div>
+            </div>
+
+            <!-- Medication Autocomplete / Add Search -->
+            <div class="autocomplete-search-box">
+              <label for="drugSearchInput">Search or Add RxNorm Medicine:</label>
+              <div class="search-input-wrapper">
+                <input type="text" id="drugSearchInput" placeholder="Type brand (e.g., Coumadin, Advil) or generic..." oninput="handleDrugSearch(this.value)">
+                <span class="search-icon">🔍</span>
+              </div>
+              <div id="searchResultsDropdown" class="search-dropdown"></div>
+            </div>
+
+            <!-- Proceed to DDI Button -->
+            <div class="review-actions">
+              <button id="btnRunDDI" class="btn-primary btn-full" onclick="runDDIAnalysis()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                Verify DDIs & Consult Gemma 4
+              </button>
+            </div>
+          </section>
+
+
+          <!-- STEP 3: Final Interaction Report & Gemma 4 Explanation -->
+          <section id="stepReport" class="flow-step">
+            <div class="step-header">
+              <button class="btn-back" onclick="goToStep('stepReview')">← Edit Chips</button>
+              <h2>Clinical Interaction Report</h2>
+              <p>Deterministic Database Verification + Gemma 4 Plain Translation</p>
+            </div>
+
+            <!-- Color-Coded Risk Alert Banner -->
+            <div id="reportRiskBanner" class="risk-alert-banner risk-red">
+              <div class="risk-badge-icon" id="riskBadgeIcon">⚠️</div>
+              <div class="risk-content">
+                <span class="risk-pretitle">ASSESSMENT RESULT</span>
+                <h3 id="riskLevelTitle">SEVERE DDI DETECTED</h3>
+                <p id="riskSubtitle">1 dangerous drug interaction pair requires immediate attention.</p>
+              </div>
+            </div>
+
+            <!-- Gemma 4 Plain-Language Patient Summary -->
+            <div class="card gemma-summary-card">
+              <div class="card-header">
+                <span class="ai-sparkle">✨</span>
+                <h4>Gemma 4 Patient Explanation</h4>
+              </div>
+              <p id="patientSummaryText" class="patient-summary">
+                Analyzing prescription...
+              </p>
+            </div>
+
+            <!-- Verified Drug Interaction Pairs -->
+            <div class="interactions-container">
+              <span class="section-label">Verified Database Interactions:</span>
+              <div id="interactionCardsList"></div>
+            </div>
+
+            <!-- Expandable "Ask Your Pharmacist" Checklist -->
+            <div class="card checklist-card">
+              <div class="checklist-header" onclick="toggleChecklist()">
+                <div class="checklist-title">
+                  <span>📋</span>
+                  <h4>Ask Your Pharmacist Checklist</h4>
+                </div>
+                <span id="checklistChevron" class="chevron">▼</span>
+              </div>
+              <div id="checklistItems" class="checklist-items open"></div>
+            </div>
+
+            <!-- Flagged Uncertainties -->
+            <div id="uncertaintiesCard" class="card uncertainties-card" style="display:none;">
+              <h4>🚩 Flagged Tokens For Verification</h4>
+              <ul id="uncertaintiesList"></ul>
+            </div>
+
+            <!-- Medical Disclaimer -->
+            <div class="disclaimer-banner">
+              <p id="disclaimerText">
+                This tool is for informational review and does not replace medical advice. Never change doses or stop medication without doctor supervision.
+              </p>
+            </div>
+
+            <button class="btn-secondary btn-full" onclick="resetToScan()">
+              Scan Another Prescription
+            </button>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

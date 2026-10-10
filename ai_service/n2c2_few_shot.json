@@ -1,0 +1,81 @@
+[
+  {
+    "clinical_note": "Patient admitted on Warfarin 5mg PO QPM. Co-prescribed Ecotrin (Aspirin) 81mg PO daily for CAD.",
+    "n2c2_annotations": [
+      {
+        "drug": "Warfarin",
+        "strength": "5mg",
+        "route": "PO",
+        "frequency": "QPM (every evening)",
+        "reason": "Anticoagulation"
+      },
+      {
+        "drug": "Aspirin",
+        "strength": "81mg",
+        "route": "PO",
+        "frequency": "Daily",
+        "reason": "CAD prophylaxis"
+      }
+    ],
+    "twosides_verified_ddi": {
+      "pair": "Warfarin + Aspirin",
+      "severity": "Severe",
+      "side_effect": "Gastrointestinal Hemorrhage",
+      "mechanism": "Additive platelet and coagulation pathway inhibition"
+    },
+    "gemma4_plain_english_summary": "You are prescribed two blood-thinning medicines: Warfarin (5mg every evening) to prevent clots, and low-dose Aspirin (81mg daily) for your heart. Taking both at the same time strongly increases your chance of bruising or stomach bleeding because they both stop your blood from clotting.",
+    "pharmacist_action": "Ask your pharmacist: 'Are there safer alternatives for pain relief while I take Warfarin, and how often should my INR blood clotting levels be tested?'"
+  },
+  {
+    "clinical_note": "Rx: Nitrostat (Nitroglycerin) 0.4mg SL PRN chest pain. Patient reports taking Sildenafil 50mg PO PRN.",
+    "n2c2_annotations": [
+      {
+        "drug": "Nitroglycerin",
+        "strength": "0.4mg",
+        "route": "SL (sublingual)",
+        "frequency": "PRN (as needed for chest pain)"
+      },
+      {
+        "drug": "Sildenafil",
+        "strength": "50mg",
+        "route": "PO",
+        "frequency": "PRN"
+      }
+    ],
+    "twosides_verified_ddi": {
+      "pair": "Nitroglycerin + Sildenafil",
+      "severity": "Severe",
+      "side_effect": "Refractory Hypotension Shock",
+      "mechanism": "Synergistic cGMP-mediated vascular dilation"
+    },
+    "gemma4_plain_english_summary": "Nitroglycerin (dissolved under the tongue for sudden chest pain) and Sildenafil (taken for erectile or pulmonary support) both relax and widen your blood vessels. When combined, they can cause an extreme and dangerous drop in your blood pressure, leading to dizziness, fainting, or shock.",
+    "pharmacist_action": "Ask your pharmacist: 'What emergency steps should I take if I experience chest pain, since I must wait at least 24 hours between Sildenafil and any nitrate medicine?'"
+  },
+  {
+    "clinical_note": "Rx: Lisinopril 20mg PO daily. Aldactone (Spironolactone) 25mg PO daily added for resistant HTN.",
+    "n2c2_annotations": [
+      {
+        "drug": "Lisinopril",
+        "strength": "20mg",
+        "route": "PO",
+        "frequency": "Daily",
+        "reason": "Hypertension"
+      },
+      {
+        "drug": "Spironolactone",
+        "strength": "25mg",
+        "route": "PO",
+        "frequency": "Daily",
+        "reason": "Resistant HTN"
+      }
+    ],
+    "twosides_verified_ddi": {
+      "pair": "Lisinopril + Spironolactone",
+      "severity": "Severe",
+      "side_effect": "Hyperkalemic Cardiac Arrhythmia",
+      "mechanism": "Additive potassium retention via RAAS blockade"
+    },
+    "gemma4_plain_english_summary": "Lisinopril (20mg daily) and Spironolactone (25mg daily) are both blood pressure medicines that cause your kidneys to hold onto potassium. When taken together, potassium can build up in your blood to unsafe levels, which can cause irregular heartbeats or palpitations.",
+    "pharmacist_action": "Ask your pharmacist: 'When should I have my blood tested to check my potassium and kidney levels, and should I avoid high-potassium foods or salt substitutes?'"
+  }
+]
