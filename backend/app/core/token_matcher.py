@@ -92,30 +92,59 @@ class TokenMatcher:
     def match_token(self, token: str, threshold: float = 0.78) -> Optional[Tuple[str, float, MedicationRecord]]:
         """
         Matches a token or phrase against known RxNorm generic and brand names.
+        Intelligently strips dosages (10mg, 500mg), medical form prefixes (Tab, Syr, Cap),
+        and extracts candidate active ingredients from compound or parenthetical notations.
         Returns (standardized_generic_name, match_confidence, MedicationRecord) or None.
         """
         token_clean = token.lower().strip()
         if not token_clean:
             return None
 
-        # 1. Exact match check
+        # 1. Direct exact match check on whole string
         if token_clean in self.name_to_generic:
             gen_name = self.name_to_generic[token_clean]
             return gen_name, 1.0, self.catalog[gen_name]
 
-        # 2. Fuzzy match across all generic and brand names
+        # 2. Extract candidate words/phrases if token contains medical forms or dosage numbers
+        medical_stop = {
+            "tab", "tabs", "tablet", "tablets", "syr", "syrup", "cap", "capsule",
+            "capsules", "inj", "injection", "rx", "dr", "md", "mg", "mcg", "g",
+            "ml", "daily", "od", "bd", "bid", "tid", "qid", "prn", "po", "at",
+            "night", "morning", "bedtime", "oral", "drops"
+        }
+
+        # Words with punctuation stripped
+        words = [w.strip().lower() for w in re.findall(r"[A-Za-z\-]{3,}", token_clean)]
+        filtered_words = [w for w in words if w not in medical_stop]
+
+        # Check exact match on individual filtered words (e.g. "Aripax" in "Tab Aripax 10mg")
+        for word in filtered_words:
+            if word in self.name_to_generic:
+                gen_name = self.name_to_generic[word]
+                return gen_name, 1.0, self.catalog[gen_name]
+
+        # Check exact match on two-word phrases (e.g. "potassium chloride")
+        for i in range(len(filtered_words) - 1):
+            phrase = f"{filtered_words[i]} {filtered_words[i+1]}"
+            if phrase in self.name_to_generic:
+                gen_name = self.name_to_generic[phrase]
+                return gen_name, 1.0, self.catalog[gen_name]
+
+        # 3. Fuzzy match across candidates (filtered words first, then full token)
+        candidates_to_try = filtered_words + [token_clean]
         best_generic: Optional[str] = None
         best_score: float = 0.0
 
-        for candidate_name, gen_name in self.name_to_generic.items():
-            sim = levenshtein_similarity(token_clean, candidate_name)
-            # Boost score if candidate starts with token
-            if candidate_name.startswith(token_clean) or token_clean.startswith(candidate_name):
-                sim = max(sim, min(1.0, sim + 0.1))
+        for cand in candidates_to_try:
+            for candidate_name, gen_name in self.name_to_generic.items():
+                sim = levenshtein_similarity(cand, candidate_name)
+                # Boost score if candidate starts with token or candidate_name
+                if candidate_name.startswith(cand) or cand.startswith(candidate_name):
+                    sim = max(sim, min(1.0, sim + 0.1))
 
-            if sim > best_score:
-                best_score = sim
-                best_generic = gen_name
+                if sim > best_score:
+                    best_score = sim
+                    best_generic = gen_name
 
         if best_score >= threshold and best_generic:
             return best_generic, round(best_score, 3), self.catalog[best_generic]
